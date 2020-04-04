@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Canvas;
 import android.util.Base64;
+import android.util.Log;
+
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -134,6 +136,9 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
     Tensor tensor = tfLite.getInputTensor(0);
     inputSize = tensor.shape()[1];
     int inputChannels = tensor.shape()[3];
+    Log.d("TEST", "Input size : "+inputSize);
+    Log.d("TEST", "Input channel : "+inputChannels);
+    Log.d("TEST", "dataType : "+tensor.dataType());
 
     InputStream inputStream = new FileInputStream(path.replace("file://", ""));
     Bitmap bitmapRaw = BitmapFactory.decodeStream(inputStream);
@@ -143,6 +148,7 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
 
     int[] intValues = new int[inputSize * inputSize];
     int bytePerChannel = tensor.dataType() == DataType.UINT8 ? 1 : BYTES_PER_CHANNEL;
+    Log.d("TEST", "bytePerChannel : "+bytePerChannel);
     ByteBuffer imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * inputChannels * bytePerChannel);
     imgData.order(ByteOrder.nativeOrder());
 
@@ -155,15 +161,24 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
     for (int i = 0; i < inputSize; ++i) {
       for (int j = 0; j < inputSize; ++j) {
         int pixelValue = intValues[pixel++];
-        if (tensor.dataType() == DataType.FLOAT32) {
-          imgData.putFloat((((pixelValue >> 16) & 0xFF) - mean) / std);
-          imgData.putFloat((((pixelValue >> 8) & 0xFF) - mean) / std);
-          imgData.putFloat(((pixelValue & 0xFF) - mean) / std);
-        } else {
-          imgData.put((byte) ((pixelValue >> 16) & 0xFF));
-          imgData.put((byte) ((pixelValue >> 8) & 0xFF));
-          imgData.put((byte) (pixelValue & 0xFF));
+        if(inputChannels==1){
+          if (tensor.dataType() == DataType.FLOAT32) {
+            imgData.putFloat(((((pixelValue >> 16) & 0xFF) + ((pixelValue >> 8) & 0xFF) + ((pixelValue >> 0) & 0xFF))/3 - mean) / std);
+          } else {
+            imgData.put((byte) ((((pixelValue >> 16) & 0xFF)+((pixelValue >> 16) & 0xFF)+((pixelValue >> 16) & 0xFF))/3));
+          }
+        }else{
+          if (tensor.dataType() == DataType.FLOAT32) {
+            imgData.putFloat((((pixelValue >> 16) & 0xFF) - mean) / std);
+            imgData.putFloat((((pixelValue >> 8) & 0xFF) - mean) / std);
+            imgData.putFloat(((pixelValue & 0xFF) - mean) / std);
+          } else {
+            imgData.put((byte) ((pixelValue >> 16) & 0xFF));
+            imgData.put((byte) ((pixelValue >> 8) & 0xFF));
+            imgData.put((byte) (pixelValue & 0xFF));
+          }
         }
+        
       }
     }
 
