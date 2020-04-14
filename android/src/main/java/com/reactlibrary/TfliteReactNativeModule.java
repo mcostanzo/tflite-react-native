@@ -163,9 +163,9 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
         int pixelValue = intValues[pixel++];
         if(inputChannels==1){
           if (tensor.dataType() == DataType.FLOAT32) {
-            imgData.putFloat(((((pixelValue >> 16) & 0xFF) + ((pixelValue >> 8) & 0xFF) + ((pixelValue >> 0) & 0xFF))/3 - mean) / std);
+            imgData.putFloat(((0.21f*((pixelValue >> 16) & 0xFF) + 0.72f*((pixelValue >> 8) & 0xFF) + 0.07f*((pixelValue >> 0) & 0xFF))/3 - mean) / std);
           } else {
-            imgData.put((byte) ((((pixelValue >> 16) & 0xFF)+((pixelValue >> 16) & 0xFF)+((pixelValue >> 16) & 0xFF))/3));
+            imgData.put((byte) ((0.21*((pixelValue >> 16) & 0xFF)+0.72*((pixelValue >> 8) & 0xFF)+0.07*(pixelValue & 0xFF))/3));
           }
         }else{
           if (tensor.dataType() == DataType.FLOAT32) {
