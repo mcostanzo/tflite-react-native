@@ -64,8 +64,7 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  private void loadModel(final String modelPath, final String modelPathCache, final String labelsPath, final int numThreads, final Callback callback)
-      throws IOException {
+  private void loadModel(final String modelPath, final String modelPathCache, final String labelsPath, final int numThreads, final Callback callback){
 
     AssetManager assetManager = reactContext.getAssets();
     AssetFileDescriptor fileDescriptor;
@@ -75,19 +74,21 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
     MappedByteBuffer buffer;
     FileChannel fileChannel;
 
-    if (modelPathCache.length() > 0) {
-      inputStream = new FileInputStream(modelPathCache);
-      fileChannel = inputStream.getChannel();
-      buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-    }else{
-      fileDescriptor = assetManager.openFd(modelPath);
-      inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-      fileChannel = inputStream.getChannel();
-      startOffset = fileDescriptor.getStartOffset();
-      declaredLength = fileDescriptor.getDeclaredLength();
-      buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
-    
+    try{
+
+      if (modelPathCache.length() > 0) {
+        inputStream = new FileInputStream(modelPathCache);
+        fileChannel = inputStream.getChannel();
+        buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+      }else{
+        fileDescriptor = assetManager.openFd(modelPath);
+        inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        fileChannel = inputStream.getChannel();
+        startOffset = fileDescriptor.getStartOffset();
+        declaredLength = fileDescriptor.getDeclaredLength();
+        buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+      }
+
     final Interpreter.Options tfliteOptions = new Interpreter.Options();
     tfliteOptions.setNumThreads(numThreads);
     tfLite = new Interpreter(buffer, tfliteOptions);
@@ -95,8 +96,15 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
     if (labelsPath.length() > 0) {
       loadLabels(assetManager, labelsPath);
     }
-
     callback.invoke(null, "success");
+
+    } catch (IOException e){
+      callback.invoke("Error:" + e, null);
+    }
+
+   
+    
+    
   }
 
   private void loadLabels(AssetManager assetManager, String path) {

@@ -5,8 +5,8 @@ const { TfliteReactNative } = NativeModules;
 class Tflite {
   loadModel(args, callback) {
     TfliteReactNative.loadModel(
-      args['model'],
-      args['modelFromCache'] || '',
+      args['modelFromAsset'],
+      args['modelFromStorage'] || '',
       args['labels'] || '',
       args['numThreads'] || 1,
       (error, response) => {
