@@ -64,16 +64,30 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  private void loadModel(final String modelPath, final String labelsPath, final int numThreads, final Callback callback)
+  private void loadModel(final String modelPath, final String modelPathCache, final String labelsPath, final int numThreads, final Callback callback)
       throws IOException {
-    AssetManager assetManager = reactContext.getAssets();
-    AssetFileDescriptor fileDescriptor = assetManager.openFd(modelPath);
-    FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-    FileChannel fileChannel = inputStream.getChannel();
-    long startOffset = fileDescriptor.getStartOffset();
-    long declaredLength = fileDescriptor.getDeclaredLength();
-    MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
 
+    AssetManager assetManager = reactContext.getAssets();
+    AssetFileDescriptor fileDescriptor;
+    FileInputStream inputStream;
+    long startOffset;
+    long declaredLength;
+    MappedByteBuffer buffer;
+    FileChannel fileChannel;
+
+    if (modelPathCache.length() > 0) {
+      inputStream = new FileInputStream(modelPathCache);
+      fileChannel = inputStream.getChannel();
+      buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+    }else{
+      fileDescriptor = assetManager.openFd(modelPath);
+      inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+      fileChannel = inputStream.getChannel();
+      startOffset = fileDescriptor.getStartOffset();
+      declaredLength = fileDescriptor.getDeclaredLength();
+      buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+    }
+    
     final Interpreter.Options tfliteOptions = new Interpreter.Options();
     tfliteOptions.setNumThreads(numThreads);
     tfLite = new Interpreter(buffer, tfliteOptions);
@@ -136,9 +150,9 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
     Tensor tensor = tfLite.getInputTensor(0);
     inputSize = tensor.shape()[1];
     int inputChannels = tensor.shape()[3];
-    Log.d("TEST", "Input size : "+inputSize);
-    Log.d("TEST", "Input channel : "+inputChannels);
-    Log.d("TEST", "dataType : "+tensor.dataType());
+    //Log.d("TEST", "Input size : "+inputSize);
+   //Log.d("TEST", "Input channel : "+inputChannels);
+    //Log.d("TEST", "dataType : "+tensor.dataType());
 
     InputStream inputStream = new FileInputStream(path.replace("file://", ""));
     Bitmap bitmapRaw = BitmapFactory.decodeStream(inputStream);
@@ -148,7 +162,7 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
 
     int[] intValues = new int[inputSize * inputSize];
     int bytePerChannel = tensor.dataType() == DataType.UINT8 ? 1 : BYTES_PER_CHANNEL;
-    Log.d("TEST", "bytePerChannel : "+bytePerChannel);
+    //Log.d("TEST", "bytePerChannel : "+bytePerChannel);
     ByteBuffer imgData = ByteBuffer.allocateDirect(1 * inputSize * inputSize * inputChannels * bytePerChannel);
     imgData.order(ByteOrder.nativeOrder());
 
@@ -163,9 +177,9 @@ public class TfliteReactNativeModule extends ReactContextBaseJavaModule {
         int pixelValue = intValues[pixel++];
         if(inputChannels==1){
           if (tensor.dataType() == DataType.FLOAT32) {
-            imgData.putFloat(((0.21f*((pixelValue >> 16) & 0xFF) + 0.72f*((pixelValue >> 8) & 0xFF) + 0.07f*((pixelValue >> 0) & 0xFF))/3 - mean) / std);
+            imgData.putFloat(((0.2126f*((pixelValue >> 16) & 0xFF) + 0.7152f*((pixelValue >> 8) & 0xFF) + 0.0722f*(pixelValue & 0xFF))-mean) / std);
           } else {
-            imgData.put((byte) ((0.21*((pixelValue >> 16) & 0xFF)+0.72*((pixelValue >> 8) & 0xFF)+0.07*(pixelValue & 0xFF))/3));
+            imgData.put((byte) ((0.2126*((pixelValue >> 16) & 0xFF)+0.7252*((pixelValue >> 8) & 0xFF)+0.0722*(pixelValue & 0xFF))));
           }
         }else{
           if (tensor.dataType() == DataType.FLOAT32) {

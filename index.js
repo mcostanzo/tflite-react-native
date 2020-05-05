@@ -6,6 +6,7 @@ class Tflite {
   loadModel(args, callback) {
     TfliteReactNative.loadModel(
       args['model'],
+      args['modelFromCache'] || '',
       args['labels'] || '',
       args['numThreads'] || 1,
       (error, response) => {
