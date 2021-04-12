@@ -89,7 +89,7 @@ let tflite = new Tflite();
 ```javascript
 tflite.loadModel({
   modelFromAsset: 'models/mobilenet_v1_1.0_224.tflite',// required 
-  // or model from storage use modelFromStorage
+  // or model from storage (RNFetchBlob.fs.dirs.MainBundleDir) use modelFromStorage 
   // modelFromStorage: 'models/mobilenet_v1_1.0_224.tflite',
   labels: 'models/mobilenet_v1_1.0_224.txt',  // required
   numThreads: 1,                              // defaults to 1  
