@@ -1,4 +1,9 @@
 
+# NOTES IN THIS VERSION
+1. Can use models from asset or storage (RNFetchBlob.fs.dirs.MainBundleDir).
+2. Auto convert input image to grayscale when models use grayscale image.
+
+
 # tflite-react-native
 
 A React Native library for accessing TensorFlow Lite API. Supports Classification, Object Detection, Deeplab and PoseNet on both iOS and Android.
