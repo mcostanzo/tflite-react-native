@@ -17,7 +17,7 @@
   "homepage": "https://github.com/shaqian/tflite-react-native#readme",
   "license": "MIT",
   "peerDependencies": {
-    "react-native": "^0.60.5"
+    "react-native": "^0.64.4"
   },
   "repository" : {
     "type" : "git",
